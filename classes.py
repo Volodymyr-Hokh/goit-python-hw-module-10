@@ -16,17 +16,29 @@ class Field:
 
 
 class Name(Field):
-    pass
+    def __eq__(self, other):
+        if isinstance(other, Name):
+            return self.value == other.value
+        return False
+
+    def __hash__(self):
+        return hash(self.value)
 
 
 class Phone(Field):
-    pass
+    def __eq__(self, other):
+        if isinstance(other, Phone):
+            return self.value == other.value
+        return False
+
+    def __hash__(self):
+        return hash(self.value)
 
 
 class Record:
     def __init__(self, name=None, *phones):
-        self.name = Name(name, required=True)
-        self.phones = [Phone(phone) for phone in phones]
+        self.name = name
+        self.phones = list(phones)
 
     def __str__(self):
         return f"{self.name.value}: {self.phones}"
@@ -34,9 +46,11 @@ class Record:
     def __repr__(self):
         return str(self)
 
-    def add_phone(self, phone: Phone):
-        self.phones.append(Phone(phone))
-        return f"Phone number {phone} for user {self.name.value} added successfully."
+    def add_phones(self, phones: list[Phone]):
+        self.phones.extend(phones)
+        self.phones = list(set(self.phones))
+        phones_values = [phone.value for phone in phones]
+        return f"Phone numbers {', '.join(phones_values)} for user {self.name.value} added successfully."
 
     def change_phone(self, old_number: Phone, new_number: Phone):
         if old_number not in self.phones:
@@ -59,8 +73,8 @@ class AddressBook(UserDict):
     def add_record(self, record):
         self[record.name.value] = record
 
-    def delete_record(self, name):
-        del self[name]
+    def delete_record(self, name: Name):
+        del self[name.value]
 
     def change_record(self, name, new_record):
         self[new_record.name.value] = new_record

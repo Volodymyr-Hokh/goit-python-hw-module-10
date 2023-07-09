@@ -5,7 +5,7 @@ import re
 import sys
 
 import classes
-from other import open_file_and_check_name, write_to_csv
+from data_manager import open_file_and_check_name, write_to_csv
 
 
 commands = {}
@@ -29,83 +29,45 @@ def input_error(func):
     return inner
 
 
-@set_commands("adduser")
+@set_commands("add")
 @input_error
 def add_user(*args):
-    """Take as input username and phone number and add them to the base."""
-    name = args[0]
-    phone_numbers = args[1:]
+    """Take as input username and phone number and add them to the base.
+    If username already exist add phone numbers to this user."""
+    name = classes.Name(args[0])
+    phone_numbers = [classes.Phone(phone) for phone in args[1:]]
 
-    data, name_exists = open_file_and_check_name(name)
-    print(data)
+    data, name_exists = open_file_and_check_name(name.value)
 
-    if name_exists:
-        return f"Name {name} already exists. "\
-            "If you want to change it, please type 'change <name> <phone number>'."
+    if name_exists and phone_numbers:
+        msg = data[name.value].add_phones(phone_numbers)
+    elif not phone_numbers:
+        raise IndexError
     else:
         record = classes.Record(name, *phone_numbers)
         data.add_record(record)
-
-    write_to_csv(data, "data.csv")
-    print(data)
-    return f"User {name} added successfully."
-
-
-@set_commands("addphone")
-@input_error
-def add_phone(*args):
-    """Take as input username and phone number and add the number for user."""
-
-    name = args[0]
-    phone_number = classes.Phone(args[1])
-
-    data, name_exists = open_file_and_check_name(name)
-
-    if not name_exists:
-        msg = f"Name {name} doesn`t exists. "\
-            "If you want to add it, please type 'add user <name> <phone number>'."
-    else:
-        msg = data[name].add_phone(phone_number)
+        msg = f"User {name} added successfully."
 
     write_to_csv(data, "data.csv")
     return msg
 
 
-@set_commands("changeuser")
+@set_commands("change")
 @input_error
-def change_user(*args):
-    """Take as input username and phone number and changes the corresponding data."""
-    name = args[0]
-    phone_numbers = args[1:]
-
-    data, name_exists = open_file_and_check_name(name)
-
-    if not name_exists:
-        return f"Name {name} doesn`t exists. "\
-            "If you want to add it, please type 'add <name> <phone number>'."
-    else:
-        record = classes.Record(name, *phone_numbers)
-        data.change_record(name, record)
-
-    write_to_csv(data, "data.csv")
-    return f"Phone numbers for {name} has been updated."
-
-
-@set_commands("changephone")
-@input_error
-def change_phone(*args):
-    """Take as input username, old and new phone number and changes the corresponding data."""
-    name = args[0]
+def change(*args):
+    """Take as input username, old and new phone number 
+    and changes the corresponding data."""
+    name = classes.Name(args[0])
     old_phone = classes.Phone(args[1])
     new_phone = classes.Phone(args[2])
 
-    data, name_exists = open_file_and_check_name(name)
+    data, name_exists = open_file_and_check_name(name.value)
 
     if not name_exists:
         msg = f"Name {name} doesn`t exists. "\
             "If you want to add it, please type 'add user <name> <phone number>'."
     else:
-        msg = data[name].change_phone(old_phone, new_phone)
+        msg = data[name.value].change_phone(old_phone, new_phone)
 
     write_to_csv(data, "data.csv")
     return msg
@@ -124,13 +86,13 @@ def clear(*args):
         return "Sorry, this command is not available on your operating system."
 
 
-@set_commands("deluser")
+@set_commands("del user")
 @input_error
 def delete_user(*args):
     """Take as input username and delete that user"""
-    name = args[0]
+    name = classes.Name(args[0])
 
-    data, name_exists = open_file_and_check_name(name)
+    data, name_exists = open_file_and_check_name(name.value)
 
     if not name_exists:
         return f"Name {name} doesn`t exists."
@@ -141,18 +103,19 @@ def delete_user(*args):
     return f"User {name} deleted successfully."
 
 
-@set_commands("delphone")
+@set_commands("del phone")
 @input_error
 def delete_phone(*args):
-    name = args[0]
+    """Take as input username and phone number and delete that phone"""
+    name = classes.Name(args[0])
     phone = classes.Phone(args[1])
 
-    data, name_exists = open_file_and_check_name(name)
+    data, name_exists = open_file_and_check_name(name.value)
 
     if not name_exists:
         msg = f"Name {name} doesn`t exists."
     else:
-        msg = data[name].delete_phone(phone)
+        msg = data[name.value].delete_phone(phone)
 
     write_to_csv(data, "data.csv")
     return msg
@@ -179,15 +142,16 @@ def help_command(*args):
 @input_error
 def phone(*args):
     """Take as input username and show user`s phone number."""
-    name = args[0]
+    name = classes.Name(args[0])
 
-    data, name_exists = open_file_and_check_name(name)
+    data, name_exists = open_file_and_check_name(name.value)
 
     if not name_exists:
         return f"Name {name} doesn`t exists. "\
             "If you want to add it, please type 'add <name> <phone number>'."
     else:
-        phone_numbers = ", ".join(str(phone) for phone in data[name].phones)
+        phone_numbers = ", ".join(str(phone)
+                                  for phone in data[name.value].phones)
         return f"Phone numbers for {name}: {phone_numbers}."
 
 
@@ -200,9 +164,11 @@ def show_all(*args):
             reader = csv.DictReader(file)
             data = classes.AddressBook()
             for row in reader:
-                username = row["Name"]
-                phones = re.sub(r"\[|\]|\ ", "",
-                                row["Phone numbers"]).split(",")
+                username = classes.Name(row["Name"])
+                phones_str = re.sub(r"\[|\]|\ ", "",
+                                    row["Phone numbers"]).split(",")
+                phones = [classes.Phone(phone) for phone in phones_str]
+
                 record = classes.Record(username, *phones)
                 data[record.name.value] = record
 

@@ -13,9 +13,11 @@ def open_file_and_check_name(name: str) -> tuple:
             reader = csv.DictReader(file)
             data = classes.AddressBook()
             for row in reader:
-                username = row["Name"]
-                phones = re.sub(r"\[|\]|\ ", "",
-                                row["Phone numbers"]).split(",")
+                username = classes.Name(row["Name"])
+                phones_str = re.sub(r"\[|\]|\ ", "",
+                                    row["Phone numbers"]).split(",")
+                phones = [classes.Phone(phone) for phone in phones_str]
+
                 record = classes.Record(username, *phones)
                 data[record.name.value] = record
 

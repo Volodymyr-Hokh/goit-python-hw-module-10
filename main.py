@@ -20,7 +20,7 @@ def completer(text, state):
 
 def parse_command(user_input: str):
     match = re.search(
-        r"^show\s|^good\s", user_input.lower())
+        r"^show\s|^good\s|^del\s", user_input.lower())
     try:
         if match:
             user_command = " ".join(user_input.split()[:2]).lower()
