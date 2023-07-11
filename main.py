@@ -35,7 +35,7 @@ def parse_command(user_input: str):
         logging.basicConfig(level=logging.ERROR)
         best_match, match_ratio = process.extractOne(user_command,
                                                      commands.keys(),
-                                                     scorer=fuzz.partial_ratio)
+                                                     scorer=fuzz.ratio)
         if match_ratio >= 60:
             return f"Command not found.\nPerhaps you meant '{best_match}'."
         else:

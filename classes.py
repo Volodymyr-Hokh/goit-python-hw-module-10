@@ -2,7 +2,7 @@ from collections import UserDict
 
 
 class Field:
-    def __init__(self, value=None, required=False):
+    def __init__(self, value, required=False):
         self.value = value
         self.required = required
         if required and not value:
@@ -14,31 +14,27 @@ class Field:
     def __repr__(self):
         return str(self)
 
-
-class Name(Field):
     def __eq__(self, other):
-        if isinstance(other, Name):
+        if self.__class__ == other.__class__:
             return self.value == other.value
         return False
 
     def __hash__(self):
         return hash(self.value)
+
+
+class Name(Field):
+    pass
 
 
 class Phone(Field):
-    def __eq__(self, other):
-        if isinstance(other, Phone):
-            return self.value == other.value
-        return False
-
-    def __hash__(self):
-        return hash(self.value)
+    pass
 
 
 class Record:
-    def __init__(self, name=None, *phones):
+    def __init__(self, name=None, phones=None):
         self.name = name
-        self.phones = list(phones)
+        self.phones = phones
 
     def __str__(self):
         return f"{self.name.value}: {self.phones}"
@@ -46,11 +42,10 @@ class Record:
     def __repr__(self):
         return str(self)
 
-    def add_phones(self, phones: list[Phone]):
-        self.phones.extend(phones)
+    def add_phone(self, phone: Phone):
+        self.phones.append(phone)
         self.phones = list(set(self.phones))
-        phones_values = [phone.value for phone in phones]
-        return f"Phone numbers {', '.join(phones_values)} for user {self.name.value} added successfully."
+        return f"Phone number {phone} for user {self.name.value} added successfully."
 
     def change_phone(self, old_number: Phone, new_number: Phone):
         if old_number not in self.phones:

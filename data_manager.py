@@ -18,7 +18,7 @@ def open_file_and_check_name(name: str) -> tuple:
                                     row["Phone numbers"]).split(",")
                 phones = [classes.Phone(phone) for phone in phones_str]
 
-                record = classes.Record(username, *phones)
+                record = classes.Record(username, phones)
                 data[record.name.value] = record
 
     except FileNotFoundError:

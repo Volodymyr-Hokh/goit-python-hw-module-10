@@ -31,20 +31,20 @@ def input_error(func):
 
 @set_commands("add")
 @input_error
-def add_user(*args):
+def add(*args):
     """Take as input username and phone number and add them to the base.
-    If username already exist add phone numbers to this user."""
+    If username already exist add phone number to this user."""
     name = classes.Name(args[0])
-    phone_numbers = [classes.Phone(phone) for phone in args[1:]]
+    phone_number = classes.Phone(args[1])
 
     data, name_exists = open_file_and_check_name(name.value)
 
-    if name_exists and phone_numbers:
-        msg = data[name.value].add_phones(phone_numbers)
-    elif not phone_numbers:
+    if name_exists and phone_number:
+        msg = data[name.value].add_phone(phone_number)
+    elif not phone_number:
         raise IndexError
     else:
-        record = classes.Record(name, *phone_numbers)
+        record = classes.Record(name, phone_number)
         data.add_record(record)
         msg = f"User {name} added successfully."
 
@@ -152,7 +152,10 @@ def phone(*args):
     else:
         phone_numbers = ", ".join(str(phone)
                                   for phone in data[name.value].phones)
-        return f"Phone numbers for {name}: {phone_numbers}."
+        if phone_numbers:
+            return f"Phone numbers for {name}: {phone_numbers}."
+        else:
+            return f"There are no phone numbers for user {name}"
 
 
 @set_commands("show all")
@@ -169,7 +172,7 @@ def show_all(*args):
                                     row["Phone numbers"]).split(",")
                 phones = [classes.Phone(phone) for phone in phones_str]
 
-                record = classes.Record(username, *phones)
+                record = classes.Record(username, phones)
                 data[record.name.value] = record
 
     except FileNotFoundError:
@@ -178,7 +181,10 @@ def show_all(*args):
     all_users = ""
     for record in data.values():
         phone_numbers = ", ".join(str(phone) for phone in record.phones)
-        all_users += f"{record.name}: {phone_numbers}\n"
+        if phone_numbers:
+            all_users += f"{record.name}: {phone_numbers}\n"
+        else:
+            all_users += f"{record.name}: No phone numbers\n"
     return all_users
 
 
